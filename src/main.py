@@ -1,12 +1,12 @@
-# import sentry_sdk
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.user.router import router as user_router
 from src.auth.router import router as auth_router
 
+# import sentry_sdk
 # sentry_sdk.init(
-#     dsn="https://a6419d29a316911c0975d5a7e8bf1576@o4507866867367936.ingest.de.sentry.io/4507866901184592",
+#     dsn=SENTRY_DSN,
 #     traces_sample_rate=1.0,
 #     profiles_sample_rate=1.0,
 # )
