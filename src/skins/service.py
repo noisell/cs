@@ -38,7 +38,8 @@ class SkinService:
     async def add_all_skins(cls):
         async with UnitOfWork() as uow:
             skins = await uow.skin.get_all_names_skins()
-        task_manager.add("skins", skins)
+        if skins:
+            task_manager.add("skins", skins)
 
 
     @classmethod
