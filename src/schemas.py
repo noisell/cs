@@ -10,7 +10,12 @@ class StatusTypes(enum.Enum):
 
 class TokenPayload(BaseModel):
     user_id: int
-    superuser: int
+    banned: bool
+
+
+class AdminPayload(BaseModel):
+    user_id: int
+    level: int
 
 
 class ErrorResponse(BaseModel):

@@ -27,6 +27,7 @@ class SQLAlchemyRepository(AbstractRepository):
     async def add_and_return_id(self, data: dict) -> int:
         stmt = insert(self.model).values(**data).returning(self.model.id)
         try:
+            print(data)
             res = await self.session.execute(stmt)
             return res.scalar_one()
         except IntegrityError:
@@ -36,6 +37,7 @@ class SQLAlchemyRepository(AbstractRepository):
         stmt = insert(self.model).values(**data)
         try:
             await self.session.execute(stmt)
+            return True
         except IntegrityError:
             return False
 

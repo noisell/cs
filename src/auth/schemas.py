@@ -16,6 +16,12 @@ class Login(BaseModel):
     username: str | None = Field(None, description="Username пользователя в Telegram", examples=["mirry_manager"], title="")
 
 
+class LoginAdmin(BaseModel):
+    login: str = Field(description="Логин", title="")
+    password: str = Field(description="Пароль", title="")
+    remember_me: bool = Field(True, description="Запомнить вход?", title="")
+
+
 class Refresh(BaseModel):
     user_id: int = Field(description="ID пользователя в Telegram", examples=["23632423"], title="")
 

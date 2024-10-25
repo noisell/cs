@@ -1,5 +1,4 @@
 from datetime import datetime, UTC
-
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncAttrs, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, mapped_column
 from typing import Annotated
@@ -9,6 +8,7 @@ from src.config import DATABASE_URL
 
 engine = create_async_engine(url=DATABASE_URL)
 session_factory = async_sessionmaker(engine, expire_on_commit=False)
+
 str256 = Annotated[str, 256]
 
 

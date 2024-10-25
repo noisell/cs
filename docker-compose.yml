@@ -1,0 +1,52 @@
+networks:
+  main:
+
+services:
+  redis:
+    image: redis:6
+    container_name: redis_app
+    command: --port 6380
+    restart: always
+    expose:
+      - 6380
+    networks:
+      - main
+
+  task_service:
+    image: cs-app:latest
+    container_name: task_service
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: always
+    command: ["python", "-m", "src.tasks.task"]
+    networks:
+      - main
+
+  bot:
+    image: cs-app:latest
+    restart: always
+    container_name: bot
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - task_service
+    command: ["python", "-m", "src.bot.main"]
+    networks:
+      - main
+
+  backend:
+    image: cs-app:latest
+    container_name: backend
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    command: ["/fastapi-start.sh"]
+    networks:
+      - main

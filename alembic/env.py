@@ -8,9 +8,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from src.config import DATABASE_URL
 
+from src.admin.models import *  # noqa: F403
 from src.user.models import *  # noqa: F403
-from src.skins.models import *  # noqa: F403
 from src.cases.models import *  # noqa: F403
+from src.skins.models import *  # noqa: F403
 from src.bets.models import *  # noqa: F403
 
 from src.database import Base

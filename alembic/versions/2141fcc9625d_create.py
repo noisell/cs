@@ -1,8 +1,8 @@
 """create
 
-Revision ID: 3a6eb0223261
+Revision ID: 2141fcc9625d
 Revises: 
-Create Date: 2024-10-17 14:24:10.518323
+Create Date: 2024-10-25 13:35:53.607675
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3a6eb0223261'
+revision: str = '2141fcc9625d'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,18 +28,25 @@ def upgrade() -> None:
     sa.Column('price', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('event',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('date_start', sa.DateTime(), nullable=False),
-    sa.Column('status', sa.Enum('active', 'winner_one', 'winner_two', name='eventstatus'), server_default='active', nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('gun',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=256), nullable=False),
     sa.Column('parent_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['parent_id'], ['gun.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('promo_code',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('type', sa.Enum('usdt', 'coin', 'clip', name='promotype'), nullable=False),
+    sa.Column('value', sa.Integer(), nullable=False),
+    sa.Column('count', sa.Integer(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('system',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('value', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('team',
@@ -55,13 +62,76 @@ def upgrade() -> None:
     sa.Column('referrer_id', sa.BigInteger(), nullable=True),
     sa.Column('photo_url', sa.String(), nullable=True),
     sa.Column('trade_url', sa.String(), nullable=True),
+    sa.Column('use_ref_bonus', sa.Boolean(), nullable=True),
     sa.Column('balance_coin', sa.Integer(), server_default='0', nullable=False),
     sa.Column('balance_usdt', sa.Float(), server_default='0', nullable=False),
+    sa.Column('balance_referrers', sa.Integer(), server_default='0', nullable=False),
     sa.Column('count_clip', sa.Integer(), server_default='5', nullable=False),
     sa.Column('time_zone', sa.Integer(), server_default='3', nullable=False),
-    sa.Column('admin_level', sa.Integer(), server_default='0', nullable=False),
+    sa.Column('banned', sa.Boolean(), server_default='false', nullable=False),
+    sa.Column('last_open_case', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
     sa.ForeignKeyConstraint(['referrer_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('admin',
+    sa.Column('id', sa.BigInteger(), autoincrement=False, nullable=False),
+    sa.Column('level', sa.Integer(), server_default='1', nullable=False),
+    sa.Column('password', sa.String(), nullable=False),
+    sa.Column('salt', sa.String(), nullable=False),
+    sa.ForeignKeyConstraint(['id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('event',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('date_start', sa.DateTime(), nullable=False),
+    sa.Column('status', sa.Boolean(), server_default='true', nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
+    sa.Column('won', sa.Integer(), nullable=True),
+    sa.Column('won_first_map', sa.Integer(), nullable=True),
+    sa.Column('won_second_map', sa.Integer(), nullable=True),
+    sa.Column('dry_bill', sa.Boolean(), nullable=True),
+    sa.Column('knife', sa.Boolean(), nullable=True),
+    sa.ForeignKeyConstraint(['won'], ['team.id'], ),
+    sa.ForeignKeyConstraint(['won_first_map'], ['team.id'], ),
+    sa.ForeignKeyConstraint(['won_second_map'], ['team.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('skin',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('name', sa.String(length=256), nullable=False),
+    sa.Column('price', sa.Float(), nullable=False),
+    sa.Column('gun_id', sa.Integer(), nullable=False),
+    sa.Column('quality', sa.Enum('BS', 'WW', 'FT', 'MW', 'FN', name='skinquality'), nullable=False),
+    sa.Column('rarity', sa.Enum('CG', 'IQ', 'AQ', 'PR', 'CL', 'SE', 'CO', name='rarityskin'), nullable=False),
+    sa.Column('image_url', sa.String(), nullable=False),
+    sa.Column('active', sa.Boolean(), server_default='true', nullable=False),
+    sa.ForeignKeyConstraint(['gun_id'], ['gun.id'], onupdate='CASCADE', ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('user_money',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('user_id', sa.BigInteger(), nullable=False),
+    sa.Column('amount', sa.Float(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('user_promo_code',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('user_id', sa.BigInteger(), nullable=False),
+    sa.Column('promo_code_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['promo_code_id'], ['promo_code.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('case_skin',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('case_id', sa.Integer(), nullable=False),
+    sa.Column('skin_id', sa.Integer(), nullable=False),
+    sa.Column('chance', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['case_id'], ['case.id'], onupdate='CASCADE', ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['skin_id'], ['skin.id'], onupdate='CASCADE', ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('event_team',
@@ -75,48 +145,14 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['team_id'], ['team.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('skin',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('name', sa.String(length=256), nullable=False),
-    sa.Column('price', sa.Float(), nullable=False),
-    sa.Column('gun_id', sa.Integer(), nullable=False),
-    sa.Column('quality', sa.Enum('BS', 'WW', 'FT', 'MW', 'FN', name='skinquality'), nullable=False),
-    sa.Column('active', sa.Boolean(), server_default='true', nullable=False),
-    sa.ForeignKeyConstraint(['gun_id'], ['gun.id'], onupdate='CASCADE', ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('user_banned',
+    op.create_table('user_receiving_skin',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('user_id', sa.BigInteger(), nullable=False),
-    sa.Column('time_end', sa.DateTime(), nullable=True),
-    sa.Column('message', sa.String(), nullable=False),
-    sa.Column('active', sa.Boolean(), server_default='true', nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('bet',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('user_id', sa.BigInteger(), nullable=False),
-    sa.Column('event_team_id', sa.Integer(), nullable=False),
-    sa.Column('event_id', sa.Integer(), nullable=False),
-    sa.Column('bet_type', sa.Enum('win', 'dry_bill', 'winner_first_card', 'winner_second_card', 'knife', name='bettype'), nullable=False),
-    sa.Column('bet', sa.Boolean(), nullable=False),
-    sa.Column('currency', sa.Enum('coin', 'usdt', name='currency'), nullable=False),
-    sa.Column('amount', sa.Integer(), nullable=False),
-    sa.Column('active', sa.Boolean(), server_default='true', nullable=False),
-    sa.ForeignKeyConstraint(['event_id'], ['event.id'], ),
-    sa.ForeignKeyConstraint(['event_team_id'], ['event_team.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('case_skin',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('case_id', sa.Integer(), nullable=False),
     sa.Column('skin_id', sa.Integer(), nullable=False),
-    sa.Column('chance', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['case_id'], ['case.id'], onupdate='CASCADE', ondelete='CASCADE'),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
+    sa.Column('status', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['skin_id'], ['skin.id'], onupdate='CASCADE', ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user_skin',
@@ -125,6 +161,22 @@ def upgrade() -> None:
     sa.Column('skin_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
     sa.ForeignKeyConstraint(['skin_id'], ['skin.id'], onupdate='CASCADE', ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('bet',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('user_id', sa.BigInteger(), nullable=False),
+    sa.Column('event_team_id', sa.Integer(), nullable=True),
+    sa.Column('event_id', sa.Integer(), nullable=False),
+    sa.Column('bet_type', sa.Enum('win', 'dry_bill', 'winner_first_card', 'winner_second_card', 'knife', name='bettype'), nullable=False),
+    sa.Column('bet', sa.Boolean(), nullable=False),
+    sa.Column('currency', sa.Enum('coin', 'usdt', name='currency'), nullable=False),
+    sa.Column('amount', sa.Integer(), nullable=False),
+    sa.Column('active', sa.Boolean(), server_default='true', nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
+    sa.ForeignKeyConstraint(['event_id'], ['event.id'], ),
+    sa.ForeignKeyConstraint(['event_team_id'], ['event_team.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -143,15 +195,20 @@ def upgrade() -> None:
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('user_case')
-    op.drop_table('user_skin')
-    op.drop_table('case_skin')
     op.drop_table('bet')
-    op.drop_table('user_banned')
-    op.drop_table('skin')
+    op.drop_table('user_skin')
+    op.drop_table('user_receiving_skin')
     op.drop_table('event_team')
+    op.drop_table('case_skin')
+    op.drop_table('user_promo_code')
+    op.drop_table('user_money')
+    op.drop_table('skin')
+    op.drop_table('event')
+    op.drop_table('admin')
     op.drop_table('user')
     op.drop_table('team')
+    op.drop_table('system')
+    op.drop_table('promo_code')
     op.drop_table('gun')
-    op.drop_table('event')
     op.drop_table('case')
     # ### end Alembic commands ###

@@ -3,6 +3,8 @@ from typing import Optional
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing_extensions import List
+
 from src.database import Base, str256, intPK
 
 
@@ -20,7 +22,7 @@ class Case(Base):
     type_price: Mapped[TypePriceCase]
     price: Mapped[float]
 
-    skins: Mapped[list["CaseSkin"]] = relationship(back_populates="case")
+    skins: Mapped[Optional[List["CaseSkin"]]] = relationship(back_populates="case")
 
 
 class CaseSkin(Base):
@@ -31,4 +33,5 @@ class CaseSkin(Base):
     chance: Mapped[int]
 
     case: Mapped["Case"] = relationship(back_populates="skins")
-    skins: Mapped["Skin"] = relationship(back_populates="cases")
+    skin: Mapped["Skin"] = relationship(back_populates="cases")
+    users: Mapped[Optional[List["UserCase"]]] = relationship(back_populates="case_skin")

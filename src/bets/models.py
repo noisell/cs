@@ -7,12 +7,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.database import Base, str256, intPK, time
 
 
-class EventStatus(enum.Enum):
-    active = "active"
-    winner_one = "winner_one"
-    winner_two = "winner_two"
-
-
 class BetType(enum.Enum):
     win = "win"
     dry_bill = "dry_bill"
@@ -39,8 +33,13 @@ class Event(Base):
     __tablename__ = "event"
     id: Mapped[intPK]
     date_start: Mapped[datetime]
-    status: Mapped[EventStatus] = mapped_column(server_default='active')
+    status: Mapped[bool] = mapped_column(server_default='true')
     created_at: Mapped[time]
+    won: Mapped[int | None] = mapped_column(ForeignKey("team.id"), server_default=None)
+    won_first_map: Mapped[int | None] = mapped_column(ForeignKey("team.id"), server_default=None)
+    won_second_map: Mapped[int | None] = mapped_column(ForeignKey("team.id"), server_default=None)
+    dry_bill: Mapped[bool | None] = mapped_column(server_default=None)
+    knife: Mapped[bool | None] = mapped_column(server_default=None)
 
     teams: Mapped[List["EventTeam"]] = relationship(back_populates="event")
     bets: Mapped[List["Bet"]] = relationship(back_populates="event")
@@ -64,13 +63,14 @@ class Bet(Base):
     __tablename__ = "bet"
     id: Mapped[intPK]
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("user.id"))
-    event_team_id: Mapped[int] = mapped_column(ForeignKey("event_team.id"))
+    event_team_id: Mapped[int | None] = mapped_column(ForeignKey("event_team.id"), server_default=None)
     event_id: Mapped[int] = mapped_column(ForeignKey("event.id"))
     bet_type: Mapped[BetType]
     bet: Mapped[bool]
     currency: Mapped[Currency]
     amount: Mapped[int]
     active: Mapped[bool] = mapped_column(server_default='true')
+    created_at: Mapped[time]
 
     event: Mapped["Event"] = relationship(back_populates="bets")
     event_team: Mapped["EventTeam"] = relationship(back_populates="bets")
